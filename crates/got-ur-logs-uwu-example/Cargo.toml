@@ -1,0 +1,7 @@
+[package]
+edition = "2021"
+name    = "got-ur-logs-uwu-example"
+version = "0.1.0"
+
+[dependencies]
+got-ur-logs-uwu = { path = "../got-ur-logs-uwu" }

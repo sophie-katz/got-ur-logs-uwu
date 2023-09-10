@@ -1,0 +1,8 @@
+[package]
+edition = "2021"
+name    = "got-ur-logs-uwu"
+version = "0.1.0"
+
+[dependencies]
+strum        = "0.25.0"
+strum_macros = "0.25.2"

@@ -6,6 +6,9 @@
         "ryanluker.vscode-coverage-gutters",
         "jedeop.crates-completer",
         "rust-lang.rust-analyzer",
-        "JScearcy.rust-doc-viewer"
+        "jscearcy.rust-doc-viewer",
+        "bierner.markdown-preview-github-styles",
+        "bierner.markdown-checkbox",
+        "bierner.markdown-emoji"
     ]
 }
