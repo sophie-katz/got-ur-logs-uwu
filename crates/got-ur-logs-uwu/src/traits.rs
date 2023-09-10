@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU General Public License along with got-ur-logs-uwu. If
 // not, see <https://www.gnu.org/licenses/>.
 
+use crate::Result;
 use std::fmt::Display;
 
 pub trait IsSeverity: PartialEq + PartialOrd + Display {
@@ -48,4 +49,18 @@ pub trait HasFatalSeverity {
     fn fatal_severity() -> Self;
 }
 
-pub trait Write {}
+pub trait HasSeverity<Severity: IsSeverity> {
+    fn severity(&self) -> &Severity;
+}
+
+pub trait HasText {
+    fn text(&self) -> &str;
+}
+
+pub trait FromCoreFields<Severity: IsSeverity> {
+    fn from_core_fields(severity: Severity, text: &str) -> Self;
+}
+
+pub trait Write<Severity: IsSeverity, Message: HasSeverity<Severity> + HasText> {
+    fn write(&mut self, message: &Message) -> Result<()>;
+}

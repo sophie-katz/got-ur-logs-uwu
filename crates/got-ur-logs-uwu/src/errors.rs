@@ -13,14 +13,13 @@
 // You should have received a copy of the GNU General Public License along with got-ur-logs-uwu. If
 // not, see <https://www.gnu.org/licenses/>.
 
-use got_ur_logs_uwu::{
-    log_info, log_message, log_with_severity, writers::ConsoleWriter, Logger, Message, Severity,
-};
+use std::result;
+use thiserror::Error;
 
-fn main() {
-    Logger::<Severity, Message<Severity>>::global().add_writer(ConsoleWriter);
-
-    log_message!(severity = Severity::Info, text = "hello, world");
-    log_with_severity!(Severity::Info, "hi");
-    log_info!("bye");
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error("asdf")]
+    Asdf,
 }
+
+pub type Result<Value> = result::Result<Value, Error>;

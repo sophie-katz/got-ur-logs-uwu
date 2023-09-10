@@ -13,9 +13,32 @@
 // You should have received a copy of the GNU General Public License along with got-ur-logs-uwu. If
 // not, see <https://www.gnu.org/licenses/>.
 
-pub struct Message<Severity> {
-    pub severity: Severity,
-    pub text: String,
+use crate::{FromCoreFields, HasSeverity, HasText, IsSeverity};
+
+pub struct Message<Severity: IsSeverity> {
+    _severity: Severity,
+    _text: String,
+}
+
+impl<Severity: IsSeverity> HasSeverity<Severity> for Message<Severity> {
+    fn severity(&self) -> &Severity {
+        &self._severity
+    }
+}
+
+impl<Severity: IsSeverity> HasText for Message<Severity> {
+    fn text(&self) -> &str {
+        self._text.as_str()
+    }
+}
+
+impl<Severity: IsSeverity> FromCoreFields<Severity> for Message<Severity> {
+    fn from_core_fields(severity: Severity, text: &str) -> Self {
+        Message {
+            _severity: severity,
+            _text: text.to_owned(),
+        }
+    }
 }
 
 #[derive(Default)]
@@ -24,11 +47,11 @@ pub struct MessageBuilder<Severity: Default> {
     pub text: Option<&'static str>,
 }
 
-impl<Severity: Default> MessageBuilder<Severity> {
+impl<Severity: IsSeverity + Default> MessageBuilder<Severity> {
     pub fn build(self) -> Message<Severity> {
         Message {
-            severity: self.severity.expect("severity must be set"),
-            text: self.text.expect("text must be set").to_owned(),
+            _severity: self.severity.expect("severity must be set"),
+            _text: self.text.expect("text must be set").to_owned(),
         }
     }
 }

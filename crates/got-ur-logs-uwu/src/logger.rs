@@ -13,101 +13,123 @@
 // You should have received a copy of the GNU General Public License along with got-ur-logs-uwu. If
 // not, see <https://www.gnu.org/licenses/>.
 
-use std::any::Any;
+use std::{any::Any, cell::RefCell};
 
 use crate::{
-    HasDebugSeverity, HasDeveloperWarningSeverity, HasErrorSeverity, HasFatalSeverity,
-    HasInfoSeverity, HasTraceSeverity, HasWarningSeverity, IsSeverity, Message,
+    FromCoreFields, HasDebugSeverity, HasDeveloperWarningSeverity, HasErrorSeverity,
+    HasFatalSeverity, HasInfoSeverity, HasSeverity, HasText, HasTraceSeverity, HasWarningSeverity,
+    IsSeverity, Write,
 };
 
-pub struct Logger<Severity: IsSeverity> {
+pub struct Logger<Severity: IsSeverity, Message: HasSeverity<Severity> + HasText> {
     min_severity: Severity,
+    writers: Vec<RefCell<Box<dyn Write<Severity, Message>>>>,
 }
 
-impl<Severity: IsSeverity> Default for Logger<Severity> {
+impl<Severity: IsSeverity, Message: HasSeverity<Severity> + HasText> Default
+    for Logger<Severity, Message>
+{
     fn default() -> Self {
         Self {
             min_severity: Severity::min(),
+            writers: Vec::new(),
         }
     }
 }
 
-impl<Severity: IsSeverity> Logger<Severity> {
-    pub fn global() -> &'static Self {
+impl<Severity: IsSeverity, Message: HasSeverity<Severity> + HasText> Logger<Severity, Message> {
+    pub fn global() -> &'static mut Self {
         static mut LOGGER: Option<Box<dyn Any>> = None;
 
         unsafe {
             if LOGGER.is_none() {
-                LOGGER = Some(Box::<Logger<Severity>>::default())
+                LOGGER = Some(Box::<Self>::default())
             }
 
             LOGGER
-                .as_ref()
+                .as_mut()
                 .expect("LOGGER should have been initialized above")
-                .downcast_ref::<Logger<Severity>>()
+                .downcast_mut::<Self>()
                 .expect("Global logger can only ever have one type")
         }
     }
 
-    pub fn log_message(&self, message: Message<Severity>) {
-        if message.severity >= self.min_severity {
-            println!("[{}] {}", message.severity, message.text);
+    pub fn add_writer<Writer: 'static + Write<Severity, Message>>(&mut self, writer: Writer) {
+        self.writers.push(RefCell::new(Box::new(writer)));
+    }
+
+    pub fn log_message(&self, message: Message) {
+        if message.severity() >= &self.min_severity {
+            // println!("[{}] {}", message.severity(), message.text());
+            for writer in &self.writers {
+                writer
+                    .borrow_mut()
+                    .write(&message)
+                    .expect("Failed to write message");
+            }
         }
     }
 
-    pub fn log_with_severity(&self, severity: Severity, message: &str) {
-        self.log_message(Message {
-            severity,
-            text: message.to_string(),
-        });
+    pub fn log_with_severity(&self, severity: Severity, text: &str)
+    where
+        Message: FromCoreFields<Severity>,
+    {
+        self.log_message(Message::from_core_fields(severity, text));
     }
 
-    pub fn log_trace(&self, message: &str)
+    pub fn log_trace(&self, text: &str)
     where
+        Message: FromCoreFields<Severity>,
         Severity: HasTraceSeverity,
     {
-        self.log_with_severity(Severity::trace_severity(), message);
+        self.log_with_severity(Severity::trace_severity(), text);
     }
 
-    pub fn log_debug(&self, message: &str)
+    pub fn log_debug(&self, text: &str)
     where
+        Message: FromCoreFields<Severity>,
         Severity: HasDebugSeverity,
     {
-        self.log_with_severity(Severity::debug_severity(), message);
+        self.log_with_severity(Severity::debug_severity(), text);
     }
 
-    pub fn log_developer_warning(&self, message: &str)
+    pub fn log_developer_warning(&self, text: &str)
     where
+        Message: FromCoreFields<Severity>,
         Severity: HasDeveloperWarningSeverity,
     {
-        self.log_with_severity(Severity::developer_warning_severity(), message);
+        self.log_with_severity(Severity::developer_warning_severity(), text);
     }
 
-    pub fn log_info(&self, message: &str)
+    pub fn log_info(&self, text: &str)
     where
+        Message: FromCoreFields<Severity>,
         Severity: HasInfoSeverity,
     {
-        self.log_with_severity(Severity::info_severity(), message);
+        self.log_with_severity(Severity::info_severity(), text);
     }
 
-    pub fn log_warning(&self, message: &str)
+    pub fn log_warning(&self, text: &str)
     where
+        Message: FromCoreFields<Severity>,
         Severity: HasWarningSeverity,
     {
-        self.log_with_severity(Severity::warning_severity(), message);
+        self.log_with_severity(Severity::warning_severity(), text);
     }
 
-    pub fn log_error(&self, message: &str)
+    pub fn log_error(&self, text: &str)
     where
+        Message: FromCoreFields<Severity>,
         Severity: HasErrorSeverity,
     {
-        self.log_with_severity(Severity::error_severity(), message);
+        self.log_with_severity(Severity::error_severity(), text);
     }
 
-    pub fn log_fatal(&self, message: &str)
+    pub fn log_fatal(&self, text: &str)
     where
+        Message: FromCoreFields<Severity>,
         Severity: HasFatalSeverity,
     {
-        self.log_with_severity(Severity::fatal_severity(), message);
+        self.log_with_severity(Severity::fatal_severity(), text);
     }
 }

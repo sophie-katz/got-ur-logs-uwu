@@ -6,3 +6,4 @@ version = "0.1.0"
 [dependencies]
 strum        = "0.25.0"
 strum_macros = "0.25.2"
+thiserror    = "1.0.48"

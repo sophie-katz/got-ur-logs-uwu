@@ -13,14 +13,18 @@
 // You should have received a copy of the GNU General Public License along with got-ur-logs-uwu. If
 // not, see <https://www.gnu.org/licenses/>.
 
-use got_ur_logs_uwu::{
-    log_info, log_message, log_with_severity, writers::ConsoleWriter, Logger, Message, Severity,
+use crate::{
+    traits::{HasSeverity, HasText},
+    IsSeverity, Result, Write,
 };
 
-fn main() {
-    Logger::<Severity, Message<Severity>>::global().add_writer(ConsoleWriter);
+pub struct ConsoleWriter;
 
-    log_message!(severity = Severity::Info, text = "hello, world");
-    log_with_severity!(Severity::Info, "hi");
-    log_info!("bye");
+impl<Severity: IsSeverity, Message: HasSeverity<Severity> + HasText> Write<Severity, Message>
+    for ConsoleWriter
+{
+    fn write(&mut self, message: &Message) -> Result<()> {
+        println!("[{}] {}", message.severity(), message.text());
+        Ok(())
+    }
 }

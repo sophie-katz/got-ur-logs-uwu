@@ -13,16 +13,21 @@
 // You should have received a copy of the GNU General Public License along with got-ur-logs-uwu. If
 // not, see <https://www.gnu.org/licenses/>.
 
+mod errors;
 mod logger;
 mod macros;
 mod message;
 mod severity;
 mod traits;
 
+pub mod writers;
+
+pub use errors::{Error, Result};
 pub use logger::Logger;
 pub use message::{Message, MessageBuilder};
 pub use severity::Severity;
 pub use traits::{
-    HasDebugSeverity, HasDeveloperWarningSeverity, HasErrorSeverity, HasFatalSeverity,
-    HasInfoSeverity, HasTraceSeverity, HasWarningSeverity, IsSeverity, Write,
+    FromCoreFields, HasDebugSeverity, HasDeveloperWarningSeverity, HasErrorSeverity,
+    HasFatalSeverity, HasInfoSeverity, HasSeverity, HasText, HasTraceSeverity, HasWarningSeverity,
+    IsSeverity, Write,
 };
