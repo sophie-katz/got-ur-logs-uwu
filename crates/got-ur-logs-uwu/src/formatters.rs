@@ -13,16 +13,6 @@
 // You should have received a copy of the GNU General Public License along with got-ur-logs-uwu. If
 // not, see <https://www.gnu.org/licenses/>.
 
-use got_ur_logs_uwu::{
-    formatters::Plaintext, log_info, log_message, log_with_severity, writers::ConsoleWriter,
-    Logger, Message, Severity,
-};
+mod plaintext;
 
-fn main() {
-    Logger::<Severity, Message<Severity>>::global()
-        .add_writer(ConsoleWriter::new_stdout(Plaintext::new_default()));
-
-    log_message!(severity = Severity::Info, text = "hello, world");
-    log_with_severity!(Severity::Info, "hi");
-    log_info!("bye");
-}
+pub use plaintext::Plaintext;

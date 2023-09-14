@@ -14,17 +14,123 @@
 // not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-    traits::{HasSeverity, HasText},
+    traits::{Format, HasSeverity, HasText},
     IsSeverity, Result, Write,
 };
+use std::{io, marker::PhantomData};
 
-pub struct ConsoleWriter;
+enum ConsoleWriterDestination<'writer> {
+    Stdout,
+    Stderr,
+    Writer(&'writer mut dyn io::Write),
+}
 
-impl<Severity: IsSeverity, Message: HasSeverity<Severity> + HasText> Write<Severity, Message>
-    for ConsoleWriter
+/// A simple writer for console output.
+///
+/// # Example
+///
+/// ```
+/// # use got_ur_logs_uwu::{
+/// #     log_info,
+/// #     writers::ConsoleWriter,
+/// #     formatters::Plaintext,
+/// #     Logger,
+/// #     Message,
+/// #     Severity,
+/// # };
+/// #
+/// // Add a console writer to the global logger
+/// Logger::<Severity, Message<Severity>>::global()
+///     .add_writer(
+///         ConsoleWriter::new_stdout(
+///             Plaintext::new_default()
+///         )
+///     );
+///
+/// // Log a message
+/// log_info!("hello, world"); // ← This will print to the console
+/// ```
+pub struct ConsoleWriter<
+    'writer,
+    SeverityType: IsSeverity,
+    MessageType: HasSeverity<SeverityType> + HasText,
+    FormatterType: Format<SeverityType, MessageType>,
+> {
+    destination: ConsoleWriterDestination<'writer>,
+    formatter: FormatterType,
+    severity_type_phantom: PhantomData<SeverityType>,
+    message_type_phantom: PhantomData<MessageType>,
+}
+
+impl<
+        'writer,
+        SeverityType: IsSeverity,
+        MessageType: HasSeverity<SeverityType> + HasText,
+        FormatterType: Format<SeverityType, MessageType>,
+    > ConsoleWriter<'writer, SeverityType, MessageType, FormatterType>
 {
-    fn write(&mut self, message: &Message) -> Result<()> {
-        println!("[{}] {}", message.severity(), message.text());
-        Ok(())
+    /// Create a new console writer that writes to stdout.
+    pub fn new_stdout(formatter: FormatterType) -> Self {
+        Self {
+            destination: ConsoleWriterDestination::Stdout,
+            formatter,
+            severity_type_phantom: PhantomData,
+            message_type_phantom: PhantomData,
+        }
+    }
+
+    /// Create a new console writer that writes to stderr.
+    pub fn new_stderr(formatter: FormatterType) -> Self {
+        Self {
+            destination: ConsoleWriterDestination::Stderr,
+            formatter,
+            severity_type_phantom: PhantomData,
+            message_type_phantom: PhantomData,
+        }
+    }
+
+    /// Create a new console writer that writes to a custom writer.
+    pub fn new_write(writer: &'writer mut dyn io::Write, formatter: FormatterType) -> Self {
+        Self {
+            destination: ConsoleWriterDestination::Writer(writer),
+            formatter,
+            severity_type_phantom: PhantomData,
+            message_type_phantom: PhantomData,
+        }
+    }
+}
+
+impl<
+        'writer,
+        SeverityType: IsSeverity,
+        MessageType: HasSeverity<SeverityType> + HasText,
+        FormatterType: Format<SeverityType, MessageType>,
+    > Write<SeverityType, MessageType>
+    for ConsoleWriter<'writer, SeverityType, MessageType, FormatterType>
+{
+    fn write(&mut self, message: &MessageType) -> Result<()> {
+        match self.destination {
+            ConsoleWriterDestination::Stdout => self.formatter.format(message, &mut io::stdout()),
+            ConsoleWriterDestination::Stderr => self.formatter.format(message, &mut io::stderr()),
+            ConsoleWriterDestination::Writer(ref mut writer) => {
+                self.formatter.format(message, writer)
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{formatters::Plaintext, FromCoreFields, Message, Result, Severity};
+
+    use super::*;
+
+    #[test]
+    fn smoke_stdout() -> Result<()> {
+        let formatter = Plaintext::new_default();
+
+        let mut writer = ConsoleWriter::new_stdout(formatter);
+
+        writer.write(&Message::from_core_fields(Severity::Info, "hello, world"))
     }
 }

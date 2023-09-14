@@ -19,20 +19,35 @@ use crate::{
 };
 use strum_macros::Display;
 
-#[derive(Display, PartialEq, PartialOrd)]
+/// The default severity type provided by `got-ur-logs-uwu`.
+///
+/// You can always define your own, but this one is provided by default.
+#[derive(Debug, Display, PartialEq, PartialOrd)]
 pub enum Severity {
+    /// Trace messages are used for highly verbose tracing of code that is only applicable for
+    /// developers tracing program execution.
     #[strum(serialize = "trace")]
     Trace,
+    /// Debug messages are those that are useful to developers, but are too verbose for other use.
     #[strum(serialize = "debug")]
     Debug,
+    /// Developer warnings are warnings that are useful to developers, but are not applicable for
+    /// other users.
     #[strum(serialize = "dev warning")]
     DeveloperWarning,
+    /// Informative messages to all users.
     #[strum(serialize = "info")]
     Info,
+    /// Warning messages to all users, indicating that something may be wrong but the program can
+    /// safely continue.
     #[strum(serialize = "warning")]
     Warning,
+    /// Error messages to all users, indicating that something went wrong but the program can
+    /// continue.
     #[strum(serialize = "error")]
     Error,
+    /// Fatal messages to all users, indicating that something went wrong and the program cannot
+    /// continue.
     #[strum(serialize = "fatal")]
     Fatal,
 }

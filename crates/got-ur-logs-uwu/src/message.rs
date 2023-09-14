@@ -15,9 +15,20 @@
 
 use crate::{FromCoreFields, HasSeverity, HasText, IsSeverity};
 
+/// The default message type provided by `got-ur-logs-uwu`.
+///
+/// You can always define your own, but this one is provided by default.
+///
+/// # Example
+///
+/// ```
+/// # use got_ur_logs_uwu::{Message, Severity, FromCoreFields};
+/// #
+/// Message::from_core_fields(Severity::Info, "hello, world");
+/// ```
 pub struct Message<Severity: IsSeverity> {
-    _severity: Severity,
-    _text: String,
+    pub(crate) _severity: Severity,
+    pub(crate) _text: String,
 }
 
 impl<Severity: IsSeverity> HasSeverity<Severity> for Message<Severity> {
@@ -41,17 +52,17 @@ impl<Severity: IsSeverity> FromCoreFields<Severity> for Message<Severity> {
     }
 }
 
-#[derive(Default)]
-pub struct MessageBuilder<Severity: Default> {
-    pub severity: Option<Severity>,
-    pub text: Option<&'static str>,
-}
+#[cfg(test)]
+mod tests {
+    use crate::{FromCoreFields, Message, Severity};
 
-impl<Severity: IsSeverity + Default> MessageBuilder<Severity> {
-    pub fn build(self) -> Message<Severity> {
-        Message {
-            _severity: self.severity.expect("severity must be set"),
-            _text: self.text.expect("text must be set").to_owned(),
-        }
+    use super::*;
+
+    #[test]
+    fn core_fields() {
+        let message = Message::from_core_fields(Severity::Debug, "test");
+
+        assert_eq!(*message.severity(), Severity::Debug);
+        assert_eq!(message.text(), "test");
     }
 }
