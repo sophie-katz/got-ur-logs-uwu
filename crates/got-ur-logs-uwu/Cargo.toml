@@ -4,6 +4,7 @@ name    = "got-ur-logs-uwu"
 version = "0.1.0"
 
 [dependencies]
+gag          = "1.0.0"
 handlebars   = "4.4.0"
 lazy_static  = "1.4.0"
 mockall      = "0.11.4"

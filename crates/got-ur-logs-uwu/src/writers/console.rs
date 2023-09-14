@@ -121,12 +121,29 @@ impl<
 
 #[cfg(test)]
 mod tests {
-    use crate::{formatters::Plaintext, FromCoreFields, Message, Result, Severity};
-
     use super::*;
+    use crate::{formatters::Plaintext, FromCoreFields, Message, Result, Severity};
+    use gag::BufferRedirect;
 
     #[test]
-    fn smoke_stdout() -> Result<()> {
+    fn stdout() -> Result<()> {
+        let formatter = Plaintext::new_default();
+
+        let mut writer = ConsoleWriter::new_stdout(formatter);
+
+        let mut buffer_stdout = BufferRedirect::stdout().unwrap();
+        let mut buffer_stderr = BufferRedirect::stderr().unwrap();
+
+        writer.write(&Message::from_core_fields(Severity::Info, "hello, world"))?;
+
+        let mut output_stdout = String::new();
+        let mut output_stderr = String::new();
+
+        Ok(())
+    }
+
+    #[test]
+    fn stderr() -> Result<()> {
         let formatter = Plaintext::new_default();
 
         let mut writer = ConsoleWriter::new_stdout(formatter);
